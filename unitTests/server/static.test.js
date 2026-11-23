@@ -380,6 +380,37 @@ describe('static plugin ordering live reload', () => {
 	});
 });
 
+describe('static plugin HEAD requests', () => {
+	it('serves a matched file for HEAD the same way as for GET', () => {
+		const { scope, state } = fakeScope();
+		handleApplication(scope);
+		state.entryCallback({ eventType: 'add', entryType: 'file', absolutePath: __filename, urlPath: '/asset.js' });
+
+		const fallthrough = Symbol('fallthrough');
+		const result = state.listener(
+			{ method: 'HEAD', isWebSocket: false, pathname: '/asset.js', url: '/asset.js', headers: {} },
+			() => fallthrough
+		);
+
+		assert.notStrictEqual(result, fallthrough);
+		assert.equal(result.handlesHeaders, true);
+	});
+
+	it('passes a HEAD for an unmatched path to the next handler', () => {
+		const { scope, state } = fakeScope();
+		handleApplication(scope);
+
+		const fallthrough = Symbol('fallthrough');
+		assert.strictEqual(
+			state.listener(
+				{ method: 'HEAD', isWebSocket: false, pathname: '/missing.js', url: '/missing.js', headers: {} },
+				() => fallthrough
+			),
+			fallthrough
+		);
+	});
+});
+
 describe('static plugin mount-root redirect', () => {
 	it('redirects the application mount root to its trailing-slash form even when static has no urlPath of its own', () => {
 		const { scope, state } = fakeScope({}, { urlPath: '/v1' });
