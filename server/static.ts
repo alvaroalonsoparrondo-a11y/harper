@@ -320,7 +320,8 @@ export function handleApplication(scope: Scope) {
 	scope.server.http(
 		(req, next) => {
 			// TODO: Not sure if the isWebSocket check is still necessary
-			if (req.method !== 'GET' || req.isWebSocket) return next(req);
+			// HEAD is served like GET; `send` omits the body for it.
+			if ((req.method !== 'GET' && req.method !== 'HEAD') || req.isWebSocket) return next(req);
 
 			// Default fallthrough to `true`
 			const fallthrough = scope.options.get(['fallthrough']) ?? true;
